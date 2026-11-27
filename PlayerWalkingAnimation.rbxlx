@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<roblox version="4">
+  <Item class="DataModel" referent="RBX0">
+    <Properties>
+      <string name="Name">WalkingAnimationPlace</string>
+    </Properties>
+    <Item class="Workspace" referent="RBX1">
+      <Properties>
+        <string name="Name">Workspace</string>
+      </Properties>
+    </Item>
+    <Item class="ReplicatedStorage" referent="RBX2">
+      <Properties>
+        <string name="Name">ReplicatedStorage</string>
+      </Properties>
+    </Item>
+    <Item class="StarterPlayer" referent="RBX3">
+      <Properties>
+        <string name="Name">StarterPlayer</string>
+      </Properties>
+      <Item class="StarterPlayerScripts" referent="RBX4">
+        <Properties>
+          <string name="Name">StarterPlayerScripts</string>
+        </Properties>
+        <Item class="LocalScript" referent="RBX5">
+          <Properties>
+            <string name="Name">PlayerWalkingAnimation</string>
+            <ProtectedString name="Source"><![CDATA[-- Player Walking Animation
+-- Letakkan Animation ID milikmu pada ANIMATION_ID.
+
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local ANIMATION_ID = "rbxassetid://1000000" -- GANTI dengan ID animasimu
+
+local FADE_TIME = 0.1
+local PLAYBACK_SPEED = 1
+
+local currentTrack
+local runningConnection
+
+local function stopCurrentAnimation()
+    if currentTrack then
+        currentTrack:Stop(FADE_TIME)
+        currentTrack:Destroy()
+        currentTrack = nil
+    end
+end
+
+local function setupCharacter(character)
+    if runningConnection then
+        runningConnection:Disconnect()
+        runningConnection = nil
+    end
+
+    stopCurrentAnimation()
+
+    local humanoid = character:WaitForChild("Humanoid")
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+
+    if not animator then
+        animator = Instance.new("Animator")
+        animator.Parent = humanoid
+    end
+
+    local animation = Instance.new("Animation")
+    animation.AnimationId = ANIMATION_ID
+
+    local success, trackOrError = pcall(function()
+        return animator:LoadAnimation(animation)
+    end)
+
+    animation:Destroy()
+
+    if not success then
+        warn("Gagal memuat animasi:", trackOrError)
+        return
+    end
+
+    currentTrack = trackOrError
+    currentTrack.Looped = true
+    currentTrack.Priority = Enum.AnimationPriority.Action
+    currentTrack:AdjustSpeed(PLAYBACK_SPEED)
+
+    runningConnection = humanoid.Running:Connect(function(speed)
+        if not currentTrack then
+            return
+        end
+
+        if speed > 0.1 and humanoid.Health > 0 then
+            if not currentTrack.IsPlaying then
+                currentTrack:Play(FADE_TIME, 1, PLAYBACK_SPEED)
+            end
+        elseif currentTrack.IsPlaying then
+            currentTrack:Stop(FADE_TIME)
+        end
+    end)
+end
+
+player.CharacterAdded:Connect(setupCharacter)
+
+if player.Character then
+    setupCharacter(player.Character)
+end
+]]></ProtectedString>
+          </Properties>
+        </Item>
+      </Item>
+    </Item>
+  </Item>
+</roblox>
